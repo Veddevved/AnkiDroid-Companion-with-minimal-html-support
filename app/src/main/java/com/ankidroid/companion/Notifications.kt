@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.text.Html
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
@@ -22,12 +24,27 @@ class Notifications {
 
         // There is a card to show, show a notification with the expanded view.
         if (card != null) {
-            collapsedView.setTextViewText(R.id.textViewCollapsedHeader, card.q)
+            // Strip HTML from card question and answer to display as plain text
+            val questionText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                Html.fromHtml(card.q, Html.FROM_HTML_MODE_LEGACY).toString()
+            } else {
+                @Suppress("DEPRECATION")
+                Html.fromHtml(card.q).toString()
+            }
+
+            val answerText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                Html.fromHtml(card.a, Html.FROM_HTML_MODE_LEGACY).toString()
+            } else {
+                @Suppress("DEPRECATION")
+                Html.fromHtml(card.a).toString()
+            }
+
+            collapsedView.setTextViewText(R.id.textViewCollapsedHeader, questionText)
             collapsedView.setTextViewText(R.id.textViewCollapsedTitle, "Anki • $deckName")
 
             val expandedView = RemoteViews(context.packageName, R.layout.notification_expanded_full)
-            expandedView.setTextViewText(R.id.textViewExpandedHeader, card.q)
-            expandedView.setTextViewText(R.id.textViewContent, card.a)
+            expandedView.setTextViewText(R.id.textViewExpandedHeader, questionText)
+            expandedView.setTextViewText(R.id.textViewContent, answerText)
 
             expandedView.setOnClickPendingIntent(R.id.button1, createIntent(context,"ACTION_BUTTON_1"))
             expandedView.setOnClickPendingIntent(R.id.button2, createIntent(context,"ACTION_BUTTON_2"))
